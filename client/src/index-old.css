@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(220, 14.3%, 4.1%);
+  --muted: hsl(210, 40%, 98%);
+  --muted-foreground: hsl(215, 13.8%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(220, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(220, 14.3%, 4.1%);
+  --border: hsl(214, 13%, 90%);
+  --input: hsl(214, 13%, 90%);
+  --primary: hsl(174, 58%, 56%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(210, 40%, 96%);
+  --secondary-foreground: hsl(220, 9%, 46%);
+  --accent: hsl(210, 40%, 96%);
+  --accent-foreground: hsl(220, 9%, 46%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(60, 9%, 98%);
+  --ring: hsl(220, 14.3%, 4.1%);
+  --radius: 0.75rem;
+  
+  /* CIC Brand Colors */
+  --cic-teal: hsl(174, 58%, 56%);
+  --cic-dark-teal: hsl(174, 58%, 36%);
+  --cic-blue: hsl(195, 75%, 39%);
+  --cic-gray: hsl(215, 13%, 44%);
+}
+
+.dark {
+  --background: hsl(220, 14%, 4%);
+  --foreground: hsl(210, 40%, 98%);
+  --muted: hsl(220, 14%, 14%);
+  --muted-foreground: hsl(215, 13%, 65%);
+  --popover: hsl(220, 14%, 4%);
+  --popover-foreground: hsl(210, 40%, 98%);
+  --card: hsl(220, 14%, 4%);
+  --card-foreground: hsl(210, 40%, 98%);
+  --border: hsl(215, 13%, 15%);
+  --input: hsl(215, 13%, 15%);
+  --primary: hsl(174, 58%, 56%);
+  --primary-foreground: hsl(220, 14%, 4%);
+  --secondary: hsl(215, 13%, 15%);
+  --secondary-foreground: hsl(210, 40%, 98%);
+  --accent: hsl(215, 13%, 15%);
+  --accent-foreground: hsl(210, 40%, 98%);
+  --destructive: hsl(0, 63%, 31%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --ring: hsl(215, 13%, 30%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .cic-gradient {
+    background: linear-gradient(135deg, var(--cic-teal) 0%, var(--cic-dark-teal) 100%);
+  }
+  
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+  }
+  
+  .nav-item.active {
+    @apply text-[var(--cic-teal)];
+  }
+  
+  .pin-digit.active {
+    border-color: hsl(var(--cic-teal));
+    background-color: hsla(174, 58%, 56%, 0.05);
+  }
+}
+
+@keyframes slide-up {
+  from { 
+    transform: translateY(100%); 
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}

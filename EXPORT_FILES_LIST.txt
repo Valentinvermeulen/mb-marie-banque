@@ -1,0 +1,62 @@
+FICHIERS ESSENTIELS À COPIER POUR CURSOR
+
+=== CONFIGURATION RACINE ===
+package.json
+package-lock.json  
+tsconfig.json
+tailwind.config.ts
+postcss.config.js
+vite.config.ts
+components.json
+drizzle.config.ts
+replit.md
+
+=== DOSSIER CLIENT ===
+client/src/App.tsx
+client/src/main.tsx
+client/src/index.css
+
+-- Composants UI --
+client/src/components/ui/ (TOUT LE DOSSIER)
+client/src/components/modals/ (TOUT LE DOSSIER)
+
+-- Pages principales --
+client/src/pages/login.tsx
+client/src/pages/register.tsx
+client/src/pages/setup-pin.tsx
+client/src/pages/client-dashboard.tsx
+client/src/pages/advisor-dashboard.tsx
+client/src/pages/transfers.tsx
+client/src/pages/my-account.tsx
+client/src/pages/my-cards.tsx
+client/src/pages/biometric-settings.tsx
+
+-- Utilitaires --
+client/src/lib/auth.ts
+client/src/lib/utils.ts
+client/src/lib/queryClient.ts
+client/src/hooks/ (TOUT LE DOSSIER)
+
+=== DOSSIER SERVER ===
+server/index.ts
+server/routes.ts
+server/storage.ts
+server/db.ts
+server/vite.ts
+
+=== DOSSIER SHARED ===
+shared/schema.ts
+
+=== ASSETS (OPTIONNEL) ===
+attached_assets/4C3AC811-0CFB-48D4-BC8E-1044C48FF3F7_1754406833025.png (Logo)
+
+=== VARIABLES D'ENVIRONNEMENT ===
+Créer un fichier .env avec:
+DATABASE_URL=postgresql://...
+
+=== COMMANDES POST-INSTALLATION ===
+1. npm install
+2. npm run db:push  
+3. npm run dev
+
+TOTAL: ~50 fichiers à copier
