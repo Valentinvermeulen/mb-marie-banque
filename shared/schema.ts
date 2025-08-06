@@ -1,249 +1,274 @@
-import { sql } from "drizzle-orm";
+
 import { sqliteTable, text, real, integer } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Table des utilisateurs
 export const users = sqliteTable("users", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  role: text("role").notNull().default("client"), // "client" or "advisor"
-  pin: text("pin"), // 6-digit PIN for transactions
-  advisorId: text("advisor_id"),
-  isApproved: integer("is_approved", { mode: 'boolean' }).default(false), // Account approval status
+  avatar: text("avatar"), // URL de l'avatar
+  bio: text("bio"), // Description de l'utilisateur
+  location: text("location"), // Ville/Pays
+  phone: text("phone"),
+  isVerified: integer("is_verified", { mode: 'boolean' }).default(false),
+  rating: real("rating").default(0),
+  totalSales: integer("total_sales").default(0),
+  totalPurchases: integer("total_purchases").default(0),
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  lastSeen: integer("last_seen", { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+// Table des catégories
+export const categories = sqliteTable("categories", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  parentId: text("parent_id"), // Pour les sous-catégories
+  icon: text("icon"), // Nom de l'icône
   createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
-export const accounts = sqliteTable("accounts", {
+// Table des marques
+export const brands = sqliteTable("brands", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull(),
-  type: text("type").notNull(), // "courant", "epargne", "pel"
-  name: text("name").notNull(),
-  balance: real("balance").notNull().default(0.00),
-  overdraftLimit: real("overdraft_limit").default(0.00),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  logo: text("logo"), // URL du logo
+  isVerified: integer("is_verified", { mode: 'boolean' }).default(false),
   createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
-// Table séparée pour les RIB (1 RIB par client, création manuelle uniquement)
-// Les RIB ne sont PAS créés automatiquement avec les comptes
-// Maximum 2 comptes courants par client, aucun RIB pour les livrets A
-export const userRibs = sqliteTable("user_ribs", {
+// Table des tailles
+export const sizes = sqliteTable("sizes", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull().unique(), // 1 RIB par client (pour tous ses comptes)
-  iban: text("iban").notNull().unique(),
-  bankName: text("bank_name").notNull().default("CIC - Crédit Industriel et Commercial"),
-  bankCode: text("bank_code").notNull().default("30027"),
-  branchCode: text("branch_code").notNull().default("10000"),
-  accountNumber: text("account_number").notNull(),
-  ribKey: text("rib_key").notNull().default("76"),
-  bic: text("bic").notNull().default("CMCIFR2A"),
-  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
-});
-
-export const cards = sqliteTable("cards", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  accountId: text("account_id").notNull(),
-  cardNumber: text("card_number").notNull().unique(),
-  holderName: text("holder_name").notNull(),
-  expiryDate: text("expiry_date").notNull(),
-  cvv: text("cvv").notNull(),
-  pin: text("pin").notNull(),
-  isVirtual: integer("is_virtual", { mode: 'boolean' }).default(true),
-  isBlocked: integer("is_blocked", { mode: 'boolean' }).default(false),
-  createdBy: text("created_by"), // advisor who created the card
-});
-
-export const transactions = sqliteTable("transactions", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  fromAccountId: text("from_account_id"),
-  toAccountId: text("to_account_id"),
-  amount: real("amount").notNull(),
-  description: text("description"), // Description optionnelle
-  recipientName: text("recipient_name"),
-  recipientIban: text("recipient_iban"),
-  senderName: text("sender_name"), // Nom de l'expéditeur pour affichage côté destinataire
-  type: text("type").notNull(), // "transfer", "deposit", "withdrawal"
-  status: text("status").notNull().default("completed"),
+  name: text("name").notNull().unique(), // XS, S, M, L, XL, etc.
+  categoryId: text("category_id"), // Pour les tailles spécifiques à certaines catégories
   createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
-// Table pour les bénéficiaires enregistrés par les clients
-export const beneficiaries = sqliteTable("beneficiaries", {
+// Table des couleurs
+export const colors = sqliteTable("colors", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull(),
-  name: text("name").notNull(),
-  iban: text("iban").notNull(),
-  bankName: text("bank_name"),
-  isInternal: integer("is_internal", { mode: 'boolean' }).default(false), // true si c'est un client de la banque
+  name: text("name").notNull().unique(), // Rouge, Bleu, Noir, etc.
+  hexCode: text("hex_code"), // Code hexadécimal de la couleur
   createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
-// Table pour les frais de découvert
-export const overdraftFees = sqliteTable("overdraft_fees", {
+// Table des produits
+export const products = sqliteTable("products", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  accountId: text("account_id").notNull(),
-  userId: text("user_id").notNull(),
-  amount: real("amount").notNull(),
-  reason: text("reason").notNull().default("Frais de découvert"),
-  negativeBalanceDays: integer("negative_balance_days").notNull(), // Nombre de jours en négatif
-  chargedAt: integer("charged_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
-});
-
-// Table pour les informations de la banque modifiables par le conseiller
-export const bankInfo = sqliteTable("bank_info", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  advisorId: text("advisor_id").notNull(),
-  bankName: text("bank_name").notNull().default("CIC - Crédit Industriel et Commercial"),
-  advisorName: text("advisor_name").notNull(),
-  advisorEmail: text("advisor_email").notNull(), // Email personnel du conseiller
-  agencyEmail: text("agency_email").notNull().default("contact@cic-lille.fr"), // Email de l'agence
-  phone: text("phone").notNull().default("03 20 12 34 56"),
-  address: text("address").notNull().default("Agence CIC Lille Centre\n15 Place Rihour\n59000 Lille"),
-  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
-});
-
-// Table pour les crédits bancaires
-export const credits = sqliteTable("credits", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull(),
-  accountId: text("account_id").notNull(), // Compte sur lequel débiter
-  creditName: text("credit_name").notNull(), // Nom du crédit (ex: "Crédit Auto", "Prêt Personnel")
-  totalAmount: real("total_amount").notNull(), // Montant total du crédit
-  monthlyAmount: real("monthly_amount").notNull(), // Montant mensuel
-  remainingAmount: real("remaining_amount").notNull(), // Montant restant
-  interestRate: real("interest_rate").notNull(), // Taux d'intérêt
-  duration: integer("duration").notNull(), // Durée en mois
-  remainingMonths: integer("remaining_months").notNull(), // Mois restants
-  nextPaymentDate: integer("next_payment_date", { mode: 'timestamp' }).notNull(), // Prochaine échéance
-  paymentDay: integer("payment_day").notNull(), // Jour de prélèvement (1-31)
+  sellerId: text("seller_id").notNull(),
+  categoryId: text("category_id").notNull(),
+  brandId: text("brand_id"),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  price: real("price").notNull(),
+  originalPrice: real("original_price"), // Prix original si applicable
+  condition: text("condition").notNull(), // "new", "like_new", "good", "fair", "poor"
+  sizeId: text("size_id"),
+  colorId: text("color_id"),
   isActive: integer("is_active", { mode: 'boolean' }).default(true),
-  createdBy: text("created_by").notNull(), // ID du conseiller qui a créé le crédit
+  isSold: integer("is_sold", { mode: 'boolean' }).default(false),
+  isReserved: integer("is_reserved", { mode: 'boolean' }).default(false),
+  views: integer("views").default(0),
+  likes: integer("likes").default(0),
   createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+// Table des images de produits
+export const productImages = sqliteTable("product_images", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  productId: text("product_id").notNull(),
+  imageUrl: text("image_url").notNull(),
+  isPrimary: integer("is_primary", { mode: 'boolean' }).default(false),
+  order: integer("order").default(0),
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+// Table des favoris
+export const favorites = sqliteTable("favorites", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull(),
+  productId: text("product_id").notNull(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+// Table des commandes
+export const orders = sqliteTable("orders", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  buyerId: text("buyer_id").notNull(),
+  sellerId: text("seller_id").notNull(),
+  productId: text("product_id").notNull(),
+  status: text("status").notNull().default("pending"), // pending, paid, shipped, delivered, cancelled
+  totalAmount: real("total_amount").notNull(),
+  shippingCost: real("shipping_cost").default(0),
+  shippingAddress: text("shipping_address").notNull(),
+  paymentMethod: text("payment_method").notNull(), // "card", "paypal", "apple_pay"
+  trackingNumber: text("tracking_number"),
+  estimatedDelivery: integer("estimated_delivery", { mode: 'timestamp' }),
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+// Table des messages entre utilisateurs
+export const messages = sqliteTable("messages", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  senderId: text("sender_id").notNull(),
+  receiverId: text("receiver_id").notNull(),
+  productId: text("product_id"), // Optionnel, pour les messages liés à un produit
+  message: text("message").notNull(),
+  isRead: integer("is_read", { mode: 'boolean' }).default(false),
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+// Table des avis et évaluations
+export const reviews = sqliteTable("reviews", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  reviewerId: text("reviewer_id").notNull(),
+  reviewedUserId: text("reviewed_user_id").notNull(),
+  orderId: text("order_id").notNull(),
+  rating: integer("rating").notNull(), // 1-5 étoiles
+  comment: text("comment"),
+  isPublic: integer("is_public", { mode: 'boolean' }).default(true),
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+// Table des notifications
+export const notifications = sqliteTable("notifications", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull(),
+  type: text("type").notNull(), // "message", "order", "favorite", "sale", etc.
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  relatedId: text("related_id"), // ID du produit, commande, etc.
+  isRead: integer("is_read", { mode: 'boolean' }).default(false),
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+// Table des tags pour les produits
+export const tags = sqliteTable("tags", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull().unique(),
+  color: text("color").default("#3B82F6"),
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+// Table de liaison produits-tags
+export const productTags = sqliteTable("product_tags", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  productId: text("product_id").notNull(),
+  tagId: text("tag_id").notNull(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
 // Export des types
 export type User = typeof users.$inferSelect;
-export type Account = typeof accounts.$inferSelect;
-export type UserRib = typeof userRibs.$inferSelect;
-export type Card = typeof cards.$inferSelect;
-export type Transaction = typeof transactions.$inferSelect;
-export type BankInfo = typeof bankInfo.$inferSelect;
-export type Credit = typeof credits.$inferSelect;
-export type Beneficiary = typeof beneficiaries.$inferSelect;
-export type OverdraftFee = typeof overdraftFees.$inferSelect;
+export type Category = typeof categories.$inferSelect;
+export type Brand = typeof brands.$inferSelect;
+export type Size = typeof sizes.$inferSelect;
+export type Color = typeof colors.$inferSelect;
+export type Product = typeof products.$inferSelect;
+export type ProductImage = typeof productImages.$inferSelect;
+export type Favorite = typeof favorites.$inferSelect;
+export type Order = typeof orders.$inferSelect;
+export type Message = typeof messages.$inferSelect;
+export type Review = typeof reviews.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
+export type Tag = typeof tags.$inferSelect;
+export type ProductTag = typeof productTags.$inferSelect;
 
 // Export des schemas d'insertion
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
-export const insertAccountSchema = createInsertSchema(accounts).omit({ id: true, createdAt: true });
-export const insertUserRibSchema = createInsertSchema(userRibs).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertCardSchema = createInsertSchema(cards).omit({ id: true });
-export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true, createdAt: true });
-export const insertBankInfoSchema = createInsertSchema(bankInfo).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertCreditSchema = createInsertSchema(credits).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertBeneficiarySchema = createInsertSchema(beneficiaries).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertOverdraftFeeSchema = createInsertSchema(overdraftFees).omit({ id: true, chargedAt: true });
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, lastSeen: true });
+export const insertCategorySchema = createInsertSchema(categories).omit({ id: true, createdAt: true });
+export const insertBrandSchema = createInsertSchema(brands).omit({ id: true, createdAt: true });
+export const insertSizeSchema = createInsertSchema(sizes).omit({ id: true, createdAt: true });
+export const insertColorSchema = createInsertSchema(colors).omit({ id: true, createdAt: true });
+export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertProductImageSchema = createInsertSchema(productImages).omit({ id: true, createdAt: true });
+export const insertFavoriteSchema = createInsertSchema(favorites).omit({ id: true, createdAt: true });
+export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, createdAt: true });
+export const insertReviewSchema = createInsertSchema(reviews).omit({ id: true, createdAt: true });
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
+export const insertTagSchema = createInsertSchema(tags).omit({ id: true, createdAt: true });
+export const insertProductTagSchema = createInsertSchema(productTags).omit({ id: true, createdAt: true });
 
 // Export des types d'insertion
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type InsertAccount = z.infer<typeof insertAccountSchema>;
-export type InsertUserRib = z.infer<typeof insertUserRibSchema>;
-export type InsertCard = z.infer<typeof insertCardSchema>;
-export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
-export type InsertBankInfo = z.infer<typeof insertBankInfoSchema>;
-export type InsertCredit = z.infer<typeof insertCreditSchema>;
-export type InsertBeneficiary = z.infer<typeof insertBeneficiarySchema>;
-export type InsertOverdraftFee = z.infer<typeof insertOverdraftFeeSchema>;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type InsertBrand = z.infer<typeof insertBrandSchema>;
+export type InsertSize = z.infer<typeof insertSizeSchema>;
+export type InsertColor = z.infer<typeof insertColorSchema>;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type InsertProductImage = z.infer<typeof insertProductImageSchema>;
+export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type InsertReview = z.infer<typeof insertReviewSchema>;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type InsertTag = z.infer<typeof insertTagSchema>;
+export type InsertProductTag = z.infer<typeof insertProductTagSchema>;
 
-// Schema pour l'enregistrement
+// Schemas de validation
+export const loginSchema = z.object({
+  username: z.string().min(1, "Le nom d'utilisateur est requis"),
+  password: z.string().min(1, "Le mot de passe est requis"),
+});
+
 export const registerSchema = z.object({
   name: z.string().min(2, "Le nom doit faire au moins 2 caractères"),
   email: z.string().email("Email invalide"),
   username: z.string().min(3, "Le nom d'utilisateur doit faire au moins 3 caractères"),
   password: z.string().min(6, "Le mot de passe doit faire au moins 6 caractères"),
+  location: z.string().optional(),
+  bio: z.string().optional(),
 });
 
-// Schema pour définir le PIN
-export const setPinSchema = z.object({
-  userId: z.string(),
-  pin: z.string().length(6, "Le PIN doit faire exactement 6 chiffres").regex(/^\d+$/, "Le PIN ne doit contenir que des chiffres"),
+export const createProductSchema = z.object({
+  title: z.string().min(3, "Le titre doit faire au moins 3 caractères"),
+  description: z.string().min(10, "La description doit faire au moins 10 caractères"),
+  price: z.number().positive("Le prix doit être positif"),
+  originalPrice: z.number().positive().optional(),
+  categoryId: z.string().min(1, "La catégorie est requise"),
+  brandId: z.string().optional(),
+  sizeId: z.string().optional(),
+  colorId: z.string().optional(),
+  condition: z.enum(["new", "like_new", "good", "fair", "poor"]),
+  images: z.array(z.string().url()).min(1, "Au moins une image est requise"),
+  tags: z.array(z.string()).optional(),
 });
 
-export const verifyPinSchema = z.object({
-  userId: z.string(),
-  pin: z.string().length(6, "Le PIN doit faire exactement 6 chiffres"),
+export const updateProductSchema = createProductSchema.partial();
+
+export const createOrderSchema = z.object({
+  productId: z.string().min(1, "Le produit est requis"),
+  shippingAddress: z.string().min(10, "L'adresse de livraison est requise"),
+  paymentMethod: z.enum(["card", "paypal", "apple_pay"]),
 });
 
-// Schema pour la mise à jour des informations bancaires
-export const updateBankInfoSchema = z.object({
-  bankName: z.string().optional(),
-  advisorName: z.string().min(2, "Le nom du conseiller doit faire au moins 2 caractères"),
-  advisorEmail: z.string().email("Email conseiller invalide"),
-  agencyEmail: z.string().email("Email agence invalide"),
-  phone: z.string().min(10, "Le numéro de téléphone doit être valide"),
-  address: z.string().min(10, "L'adresse doit être complète"),
+export const sendMessageSchema = z.object({
+  receiverId: z.string().min(1, "Le destinataire est requis"),
+  productId: z.string().optional(),
+  message: z.string().min(1, "Le message ne peut pas être vide"),
 });
 
-export type UpdateBankInfo = z.infer<typeof updateBankInfoSchema>;
-
-export const loginSchema = z.object({
-  username: z.string().min(1),
-  password: z.string().min(1),
+export const createReviewSchema = z.object({
+  orderId: z.string().min(1, "La commande est requise"),
+  rating: z.number().min(1).max(5, "La note doit être entre 1 et 5"),
+  comment: z.string().optional(),
+  isPublic: z.boolean().default(true),
 });
 
-export const transferSchema = z.object({
-  fromAccountId: z.string(),
-  toAccountId: z.string().optional(),
-  amount: z.string().refine((val) => parseFloat(val) > 0, "Amount must be positive"),
-  description: z.string().optional(), // Description optionnelle
-  recipientName: z.string().optional(),
-  recipientIban: z.string().optional(),
-  type: z.string().default("transfer"),
-  pin: z.string().length(6, "Le PIN doit faire exactement 6 chiffres"),
-  userId: z.string(),
-});
-
-// Schema pour les alertes conseillers
-export const advisorAlertSchema = z.object({
-  userId: z.string(),
-  title: z.string(),
-  message: z.string(),
-  type: z.string().default("overdraft_alert"),
-  amount: z.string().optional(),
-});
-
-// Notifications table
-export const notifications = sqliteTable("notifications", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull(),
-  title: text("title").notNull(),
-  message: text("message").notNull(),
-  type: text("type").notNull().default("info"), // info, success, warning, error
-  isRead: integer("is_read", { mode: 'boolean' }).notNull().default(false),
-  amount: text("amount"), // For transaction notifications
-  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
-
-// Messages table for advisor-client chat
-export const messages = sqliteTable("messages", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  senderId: text("sender_id").notNull(),
-  receiverId: text("receiver_id").notNull(),
-  message: text("message").notNull(),
-  isRead: integer("is_read", { mode: 'boolean' }).notNull().default(false),
-  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
-
-// Additional schemas
-export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
-export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, createdAt: true });
-
-export type InsertNotification = z.infer<typeof insertNotificationSchema>;
-export type InsertMessage = z.infer<typeof insertMessageSchema>;
-export type Notification = typeof notifications.$inferSelect;
-export type Message = typeof messages.$inferSelect;
+// Types pour les réponses API
+export type LoginRequest = z.infer<typeof loginSchema>;
+export type RegisterRequest = z.infer<typeof registerSchema>;
+export type CreateProductRequest = z.infer<typeof createProductSchema>;
+export type UpdateProductRequest = z.infer<typeof updateProductSchema>;
+export type CreateOrderRequest = z.infer<typeof createOrderSchema>;
+export type SendMessageRequest = z.infer<typeof sendMessageSchema>;
+export type CreateReviewRequest = z.infer<typeof createReviewSchema>;
