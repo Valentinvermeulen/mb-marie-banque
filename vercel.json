@@ -1,18 +1,44 @@
 {
   "version": 2,
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "builds": [
     {
       "src": "client/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist"
+        "distDir": "../dist/public",
+        "installCommand": "rm -rf node_modules package-lock.json && npm cache clean --force && echo 'CACHE COMPLÈTEMENT NETTOYÉ'",
+        "buildCommand": "npm run build"
       }
     }
   ],
   "routes": [
     {
+      "src": "/assets/(.*)",
+      "dest": "/dist/public/assets/$1"
+    },
+    {
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot))",
+      "dest": "/dist/public/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/client/dist/index.html"
+      "dest": "/dist/public/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     }
   ]
 } 
