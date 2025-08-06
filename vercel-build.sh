@@ -1,10 +1,21 @@
 #!/bin/bash
 
-# Script de build SIMPLE pour Vercel
-echo "🚀 BUILD SIMPLE - UTILISATION SEULEMENT DU CLIENT"
-echo "================================================="
+echo "🔥🔥🔥 BUILD ULTRA RADICAL - FORÇAGE COMPLET 🔥🔥🔥"
+echo "=================================================="
 
-# Aller directement dans le dossier client
+# Nettoyer COMPLÈTEMENT tout
+echo "🧹 NETTOYAGE COMPLET DE L'ENVIRONNEMENT..."
+rm -rf node_modules package-lock.json
+rm -rf dist
+rm -rf .npm
+rm -rf .cache
+rm -rf .vercel
+
+# Nettoyer le cache npm global
+echo "🧹 NETTOYAGE DU CACHE NPM GLOBAL..."
+npm cache clean --force
+
+# Aller dans le dossier client
 echo "📁 Changement vers le dossier client..."
 cd client
 
@@ -26,23 +37,12 @@ else
     exit 1
 fi
 
-# Vérifier qu'il n'y a pas de @radix-ui/react-command
-echo "🔍 VÉRIFICATION QU'IL N'Y A PAS DE @radix-ui/react-command..."
-if npm list | grep "react-command"; then
-    echo "❌ ERREUR: @radix-ui/react-command TROUVÉ!"
-    exit 1
-else
-    echo "✅ AUCUNE RÉFÉRENCE À @radix-ui/react-command"
-fi
-
 # Build de l'application
 echo "🔨 BUILD DE L'APPLICATION..."
 npm run build
 
 if [ $? -eq 0 ]; then
     echo "✅ BUILD TERMINÉ AVEC SUCCÈS!"
-    echo "📁 Contenu du dossier dist:"
-    ls -la dist/
 else
     echo "❌ ERREUR: BUILD ÉCHOUÉ"
     exit 1

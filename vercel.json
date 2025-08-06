@@ -11,7 +11,7 @@
       "use": "@vercel/static-build",
       "config": {
         "distDir": "../dist/public",
-        "installCommand": "rm -rf node_modules package-lock.json && npm cache clean --force && echo 'CACHE COMPLÈTEMENT NETTOYÉ'",
+        "installCommand": "rm -rf node_modules package-lock.json && npm cache clean --force && echo 'CACHE COMPLÈTEMENT NETTOYÉ' && echo 'FORÇAGE COMPLET'",
         "buildCommand": "npm run build"
       }
     }
